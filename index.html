@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>AR GPS Project</title>
+    <!-- Подключаем A-Frame -->
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <!-- Подключаем AR.js с поддержкой геолокации -->
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  </head>
+  <body style="margin: 0; overflow: hidden;">
+    <a-scene
+      vr-mode-ui="enabled: false"
+      embedded
+      arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;"
+    >
+      <!-- Загрузка ресурсов -->
+      <a-assets>
+        <!-- Изображение -->
+        <img id="image" src="logo.png" />
+
+        <!-- Видеофайл -->
+        <video
+          id="video"
+          src="Rick Astley - Never Gonna Give You Up (Official Music Video).mp4"
+          crossorigin="anonymous"
+          playsinline
+          webkit-playsinline
+          loop
+          muted
+        ></video>
+
+        <!-- Аудиофайл -->
+        <audio id="audio" src="IcikCiperDimok.mp3"></audio>
+      </a-assets>
+
+      <!-- GPS-маркер для изображения -->
+      <a-entity gps-entity-place="latitude: 40.748817; longitude: -73.985428" id="image-marker">
+        <a-image
+          src="#image"
+          scale="20 20 20"
+          position="0 10 0"
+          look-at="[gps-camera]"
+          visible="false"
+        ></a-image>
+      </a-entity>
+
+      <!-- GPS-маркер для видео -->
+      <a-entity gps-entity-place="latitude: 51.500729; longitude: -0.124625" id="video-marker">
+        <a-video
+          src="#video"
+          scale="20 11.25 1"
+          position="0 10 0"
+          look-at="[gps-camera]"
+          visible="false"
+        ></a-video>
+      </a-entity>
+
+      <!-- GPS-маркер для звука -->
+      <a-entity gps-entity-place="latitude: 35.689487; longitude: 139.691711" id="audio-marker">
+        <a-entity
+          id="sound-entity"
+          sound="src: #audio; autoplay: false;"
+          position="0 0 0"
+          visible="false"
+        >
+          <!-- Визуальный объект -->
+          <a-box
+            color="blue"
+            depth="5"
+            height="5"
+            width="5"
+            position="0 2.5 0"
+            look-at="[gps-camera]"
+          ></a-box>
+        </a-entity>
+      </a-entity>
+
+      <!-- GPS-камера -->
+      <a-camera gps-camera rotation-reader></a-camera>
+    </a-scene>
+
+    <script>
+      // Функции для изображения
+      const imageMarker = document.querySelector('#image-marker');
+      const imageEntity = imageMarker.querySelector('a-image');
+
+      imageMarker.addEventListener('gps-entity-place-update-position', () => {
+        const distance = imageMarker.components['gps-entity-place'].distance;
+        if (distance < 100) {
+          imageEntity.setAttribute('visible', 'true');
+        } else {
+          imageEntity.setAttribute('visible', 'false');
+        }
+      });
+
+      // Функции для видео
+      const videoMarker = document.querySelector('#video-marker');
+      const videoEntity = videoMarker.querySelector('a-video');
+      const videoElement = document.querySelector('#video');
+
+      videoMarker.addEventListener('gps-entity-place-update-position', () => {
+        const distance = videoMarker.components['gps-entity-place'].distance;
+        if (distance < 100) {
+          videoEntity.setAttribute('visible', 'true');
+          videoElement.play();
+        } else {
+          videoEntity.setAttribute('visible', 'false');
+          videoElement.pause();
+        }
+      });
+
+      // Функции для звука
+      const audioMarker = document.querySelector('#audio-marker');
+      const soundEntity = document.querySelector('#sound-entity');
+      let audioPlaying = false;
+
+      audioMarker.addEventListener('gps-entity-place-update-position', () => {
+        const distance = audioMarker.components['gps-entity-place'].distance;
+        if (distance < 100) {
+          soundEntity.setAttribute('visible', 'true');
+          if (!audioPlaying) {
+            soundEntity.components.sound.playSound();
+            audioPlaying = true;
+          }
+        } else {
+          soundEntity.setAttribute('visible', 'false');
+          if (audioPlaying) {
+            soundEntity.components.sound.stopSound();
+            audioPlaying = false;
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
